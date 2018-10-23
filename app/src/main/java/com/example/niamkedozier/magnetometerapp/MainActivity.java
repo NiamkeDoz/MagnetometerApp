@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             double magnitude = Math.sqrt((magX * magX) + (magY * magY) + (magZ * magZ));
             double magnitude2 = magnitude * .0001;
             value.setText((DECIMAL_FORMATTER.format(magnitude) + " \u00B5Tesla"));
-            value2.setText((DECIMAL_FORMATTER2.format(magnitude2) + "G (Gauss)"));
+            value2.setText((DECIMAL_FORMATTER2.format(magnitude2) + " G (Gauss)"));
 
         }
     }
