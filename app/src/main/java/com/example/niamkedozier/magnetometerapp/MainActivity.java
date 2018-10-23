@@ -9,6 +9,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 
+import org.w3c.dom.Text;
+
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.text.DecimalFormat;
@@ -17,18 +19,22 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener{
     private TextView value;
+    private TextView value2;
     private SensorManager sensorManager;
     public static DecimalFormat DECIMAL_FORMATTER;
+    public static DecimalFormat DECIMAL_FORMATTER2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         value = (TextView) findViewById(R.id.value);
+        value2 = (TextView) findViewById(R.id.value2);
         //define decimal
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
         symbols.setDecimalSeparator('.');
         DECIMAL_FORMATTER = new DecimalFormat("#.00", symbols);
+        DECIMAL_FORMATTER2 = new DecimalFormat("#.00000", symbols);
 
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
@@ -68,7 +74,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             float magY = event.values[1];
             float magZ = event.values[2];
             double magnitude = Math.sqrt((magX * magX) + (magY * magY) + (magZ * magZ));
+            double magnitude2 = magnitude * .0001;
             value.setText((DECIMAL_FORMATTER.format(magnitude) + " \u00B5Tesla"));
+            value2.setText((DECIMAL_FORMATTER2.format(magnitude2) + "G (Gauss)"));
 
         }
     }
