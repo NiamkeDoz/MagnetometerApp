@@ -1,56 +1,57 @@
 package com.example.niamkedozier.magnetometerapp;
 
+
+import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.w3c.dom.Text;
 
+import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.sql.SQLOutput;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
+
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener{
     private TextView value;
     private TextView value2;
     private SensorManager sensorManager;
     public static DecimalFormat DECIMAL_FORMATTER;
-    public static DecimalFormat DECIMAL_FORMATTER2;
+    private Context context;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         value = (TextView) findViewById(R.id.value);
-        value2 = (TextView) findViewById(R.id.value2);
+        Button SaveBtn = findViewById(R.id.Save);
+
         //define decimal
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
         symbols.setDecimalSeparator('.');
         DECIMAL_FORMATTER = new DecimalFormat("#.00", symbols);
-        DECIMAL_FORMATTER2 = new DecimalFormat("#.00000", symbols);
-
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-
-        String data = value.getText().toString();
-
-        try{
-            FileOutputStream fileOut = openFileOutput("Data.txt", MODE_APPEND);
-            OutputStreamWriter outputWriter = new OutputStreamWriter(fileOut);
-            outputWriter.write(data);
-            outputWriter.write("\n");
-            outputWriter.close();
-        }catch (Exception ex){
-            ex.printStackTrace();
-        }
-
         System.out.println(MainActivity.this.getFilesDir().getAbsoluteFile());
+
+
+
     }
 
 
@@ -74,9 +75,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             float magY = event.values[1];
             float magZ = event.values[2];
             double magnitude = Math.sqrt((magX * magX) + (magY * magY) + (magZ * magZ));
-            double magnitude2 = magnitude * .0001;
-            value.setText((DECIMAL_FORMATTER.format(magnitude) + " \u00B5Tesla"));
-            value2.setText((DECIMAL_FORMATTER2.format(magnitude2) + " G (Gauss)"));
+            value.setText((DECIMAL_FORMATTER.format(magnitude)));           // + " \u00B5Tesla"
 
         }
     }
@@ -86,18 +85,41 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
-    public void BtnSave(View view){
-        String data = value.getText().toString();
-
-        //Tries to create a text file
-        try{
-            FileOutputStream fileOut = openFileOutput("Data.txt", MODE_APPEND);
-            OutputStreamWriter outputWriter = new OutputStreamWriter(fileOut);
-            outputWriter.write(data);
-            outputWriter.write("\n");
-            outputWriter.close();
-        }catch (Exception ex){
-            ex.printStackTrace();
-        }
+    public void BtnPress(View view){
+        System.out.println("Button Pressed");
+        System.out.println(MainActivity.this.getFilesDir().getAbsoluteFile());
+        SaveData();
     }
+
+    public void SaveData(){
+        value2 = findViewById(R.id.SavedValue);
+        value2.setText(value.getText().toString());
+        String fileName = "hello.txt";
+        String contents = value2.getText().toString() + ",";
+        //Checking the availability state of the External Storage.
+        String state = Environment.getExternalStorageState();
+        if (!Environment.MEDIA_MOUNTED.equals(state)) {
+
+            //If it isn't mounted - we can't write into it.
+            return;
+        }
+
+        File file = new File(getExternalFilesDir(null), fileName);
+        FileOutputStream outputStream;
+        try {
+            file.createNewFile();
+            outputStream = new FileOutputStream(file, true);
+            outputStream.write(contents.getBytes());
+            outputStream.flush();
+            outputStream.close();
+
+            //display file saved message
+            Toast.makeText(getBaseContext(), "File saved successfully!",
+                    Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
 }
