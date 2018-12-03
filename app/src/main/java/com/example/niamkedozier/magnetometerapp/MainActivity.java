@@ -6,12 +6,15 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.LocationManager;
 import android.os.Environment;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,9 +34,17 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity implements SensorEventListener{
     private TextView value;
     private TextView value2;
+    private TextView time;
+    private EditText txtFilename;
     private SensorManager sensorManager;
     public static DecimalFormat DECIMAL_FORMATTER;
+    private LocationManager locationManager;
     private Context context;
+    Runnable updater;
+    double elapsed;
+
+
+
 
 
     @Override
@@ -42,18 +53,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setContentView(R.layout.activity_main);
         value = (TextView) findViewById(R.id.value);
         Button SaveBtn = findViewById(R.id.Save);
+        time = findViewById(R.id.elapsedTime);
+        txtFilename = findViewById(R.id.textFileName);
+
 
         //define decimal
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
         symbols.setDecimalSeparator('.');
         DECIMAL_FORMATTER = new DecimalFormat("#.00", symbols);
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        System.out.println(MainActivity.this.getFilesDir().getAbsoluteFile());
-
 
 
     }
-
 
     @Override
     protected void onResume() {
@@ -85,17 +96,33 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
+
+
     public void BtnPress(View view){
         System.out.println("Button Pressed");
         System.out.println(MainActivity.this.getFilesDir().getAbsoluteFile());
-        SaveData();
+        final Handler timeHandler = new Handler();
+        elapsed = 0.0;
+            updater = new Runnable() {
+            @Override
+            public void run() {
+                SaveData();
+                timeHandler.postDelayed(updater, 500);
+                elapsed += 0.5;
+
+            }
+        };
+        timeHandler.post(updater);
+
     }
 
     public void SaveData(){
         value2 = findViewById(R.id.SavedValue);
         value2.setText(value.getText().toString());
-        String fileName = "hello.txt";
-        String contents = value2.getText().toString() + ",";
+        time.setText(String.valueOf(elapsed));
+        String fileName = txtFilename.getText().toString();
+        String contents = value2.getText().toString() + "\n";
+        String test3 = "test3.txt";
         //Checking the availability state of the External Storage.
         String state = Environment.getExternalStorageState();
         if (!Environment.MEDIA_MOUNTED.equals(state)) {
@@ -104,6 +131,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             return;
         }
 
+        // Create text file
         File file = new File(getExternalFilesDir(null), fileName);
         FileOutputStream outputStream;
         try {
@@ -114,8 +142,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             outputStream.close();
 
             //display file saved message
-            Toast.makeText(getBaseContext(), "File saved successfully!",
-                    Toast.LENGTH_SHORT).show();
+//            Toast.makeText(getBaseContext(), "File saved successfully!",
+////                    Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             e.printStackTrace();
         }
