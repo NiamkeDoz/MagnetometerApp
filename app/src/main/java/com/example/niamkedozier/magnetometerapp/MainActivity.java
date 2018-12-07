@@ -11,29 +11,21 @@ import android.os.Environment;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import org.w3c.dom.Text;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.sql.SQLOutput;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener{
-    private TextView value;
-    private TextView value2;
+    private TextView magneticReading;
+    private TextView previousMagneticReading;
     private TextView time;
     private EditText txtFilename;
     private SensorManager sensorManager;
@@ -51,7 +43,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        value = (TextView) findViewById(R.id.value);
+        //links variables from Designer to variables in MainActivity.java
+        magneticReading = (TextView) findViewById(R.id.magneticReading);
         Button SaveBtn = findViewById(R.id.Save);
         time = findViewById(R.id.elapsedTime);
         txtFilename = findViewById(R.id.textFileName);
@@ -60,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         //define decimal
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
         symbols.setDecimalSeparator('.');
+        //Format how many decimal places
         DECIMAL_FORMATTER = new DecimalFormat("#.00", symbols);
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
@@ -81,12 +75,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     public void onSensorChanged(SensorEvent event) {
         if(event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD){
-            //Gets all axis
+            //Retrieve x, y, z axis
             float magX = event.values[0];
             float magY = event.values[1];
             float magZ = event.values[2];
+            //Store result in magnitude
             double magnitude = Math.sqrt((magX * magX) + (magY * magY) + (magZ * magZ));
-            value.setText((DECIMAL_FORMATTER.format(magnitude)));           // + " \u00B5Tesla"
+            //Formats magnitude in correct decimal format.
+            magneticReading.setText((DECIMAL_FORMATTER.format(magnitude)));           // + " \u00B5Tesla"
 
         }
     }
@@ -97,10 +93,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
 
-
+    //Program starts when user clicks Save.
     public void BtnPress(View view){
         System.out.println("Button Pressed");
+        /*This line will print to the console where your file will be located on your device.
+            This will allow you to navigate to the file using your file manager on your device.
+         */
         System.out.println(MainActivity.this.getFilesDir().getAbsoluteFile());
+        /*
+            This will save data every 1/2 second and update the elapsed time counter.
+            The elapsed variable is not associated with a time library. It will need to be updated to work with a time
+            library. If this program runs for a long time it could possibly throw an error for since a double variable is being used
+            instead of time function.
+
+            https://stackoverflow.com/questions/46839264/get-sensor-data-every-1-10th-second
+         */
         final Handler timeHandler = new Handler();
         elapsed = 0.0;
             updater = new Runnable() {
@@ -117,13 +124,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     public void SaveData(){
-        value2 = findViewById(R.id.SavedValue);
-        value2.setText(value.getText().toString());
+        //Retrieves that last magnetic reading saved to the file.
+        previousMagneticReading = findViewById(R.id.SavedValue);
+        previousMagneticReading.setText(magneticReading.getText().toString());
+        //Displays elapsed time
         time.setText(String.valueOf(elapsed));
+        //Retrieves filename from user and saves data to the that filename.
         String fileName = txtFilename.getText().toString();
-        String contents = value2.getText().toString() + "\n";
-        String test3 = "test3.txt";
+        String contents = previousMagneticReading.getText().toString() + "\n";
+        //String test3 = "test3.txt";
+
         //Checking the availability state of the External Storage.
+        /*Storing a file locally on the Android will need to be External
+          Saving files to device storage:
+          https://developer.android.com/training/data-storage/files
+        */
         String state = Environment.getExternalStorageState();
         if (!Environment.MEDIA_MOUNTED.equals(state)) {
 
@@ -131,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             return;
         }
 
-        // Create text file
+        // Basic I/O functionality
         File file = new File(getExternalFilesDir(null), fileName);
         FileOutputStream outputStream;
         try {
